@@ -1,6 +1,9 @@
 package com.cvt.cvtgaana.dal;
 
 import com.cvt.cvtgaana.model.Playlist;
+import com.cvt.cvtgaana.model.PlaylistNotFoundException;
+import com.cvt.cvtgaana.model.User;
+import com.cvt.cvtgaana.model.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -24,17 +27,28 @@ public class PlaylistDalImpl implements PlaylistDal {
     }
 
     @Override
-    public List<Playlist> getAllPlaylistOfUser(String userId) {
+    public List<Playlist> getAllPlaylistOfUser(String userId) throws UserNotFoundException{
         Query query = new Query();
         query.addCriteria(Criteria.where("userId").is(userId));
-        return mongoTemplate.find(query, Playlist.class);
+        List<Playlist> playlists = mongoTemplate.find(query, Playlist.class);
+        if(playlists==null) throw new UserNotFoundException(userId);
+        return playlists;
     }
 
     @Override
-    public Playlist getPlaylistById(String playlistId) {
+    public Playlist getPlaylistById(String playlistId) throws PlaylistNotFoundException{
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").is(playlistId));
-        return mongoTemplate.findOne(query, Playlist.class);
+        Playlist playlist = mongoTemplate.findOne(query, Playlist.class);
+        if(playlist==null) throw new PlaylistNotFoundException(playlistId);
+        return playlist;
+    }
+
+    @Override
+    public void updatePlaylistById(String playlistId, Playlist playlist) {
+        Playlist updatedPlaylist = getPlaylistById(playlistId);
+        updatedPlaylist = playlist;
+        mongoTemplate.save(updatedPlaylist);
     }
 
     @Override
@@ -43,10 +57,7 @@ public class PlaylistDalImpl implements PlaylistDal {
     }
 
     @Override
-    public void deletePlaylist(String playlistId) {
-        Query query = new Query();
-        query.addCriteria(Criteria.where("_id").is(playlistId));
-        Playlist playlist = mongoTemplate.findOne(query, Playlist.class);
-        mongoTemplate.remove(playlist);
+    public void deletePlaylist(String playlistId) throws PlaylistNotFoundException{
+        mongoTemplate.remove(getPlaylistById(playlistId));
     }
 }

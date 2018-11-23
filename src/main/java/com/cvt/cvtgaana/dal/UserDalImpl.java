@@ -1,6 +1,7 @@
 package com.cvt.cvtgaana.dal;
 
 import com.cvt.cvtgaana.model.User;
+import com.cvt.cvtgaana.model.UserNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -24,10 +25,12 @@ public class UserDalImpl implements UserDal {
     }
 
     @Override
-    public User getUserById(String userId) {
+    public User getUserById(String userId) throws UserNotFoundException {
         Query query = new Query();
         query.addCriteria(Criteria.where("_id").is(userId));
-        return mongoTemplate.findOne(query, User.class);
+        User user = mongoTemplate.findOne(query, User.class);
+        if (user==null) throw new UserNotFoundException(userId);
+        return user;
     }
 
     @Override
@@ -36,8 +39,14 @@ public class UserDalImpl implements UserDal {
     }
 
     @Override
-    public void deleteUser(String userId) {
-        User user = mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(userId)), User.class);
-        mongoTemplate.remove(user);
+    public void updateUserById(String userId, User user) {
+        User updatedUser = getUserById(userId);
+        updatedUser = user;
+        mongoTemplate.save(updatedUser);
+    }
+
+    @Override
+    public void deleteUser(String userId) throws UserNotFoundException{
+        mongoTemplate.remove(getUserById(userId));
     }
 }

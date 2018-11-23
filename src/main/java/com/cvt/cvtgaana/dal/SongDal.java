@@ -9,5 +9,6 @@ public interface SongDal {
     List<Song> getAllSongsOfPlaylist(String playlistId);
     Song getSongById(String songId);
     void saveSong(Song song);
+    void updateSongById(String songId, Song song);
     void deleteSong(String songId);
 }
